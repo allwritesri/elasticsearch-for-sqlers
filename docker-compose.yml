@@ -1,0 +1,50 @@
+version: '3.5'
+services:
+  postgres:
+    container_name: postgres
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=sqlpad
+      - POSTGRES_PASSWORD=sqlpad
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  sqlpad:
+    container_name: sqlpad
+    image: "sqlpad/sqlpad"
+    restart: always
+    ports:
+      - 3000:3000
+    environment:
+      SQLPAD_ADMIN: 'sqlpad'
+      SQLPAD_ADMIN_PASSWORD: 'sqlpad'
+      SQLPAD_APP_LOG_LEVEL: debug
+      SQLPAD_WEB_LOG_LEVEL: warn
+      SQLPAD_SEED_DATA_PATH: /etc/sqlpad/seed-data
+      SQLPAD_CONNECTIONS__pgdemo__name: Postgres demo
+      SQLPAD_CONNECTIONS__pgdemo__driver: postgres
+      SQLPAD_CONNECTIONS__pgdemo__host: postgres
+      SQLPAD_CONNECTIONS__pgdemo__database: sqlpad
+      SQLPAD_CONNECTIONS__pgdemo__username: sqlpad
+      SQLPAD_CONNECTIONS__pgdemo__password: sqlpad
+      SQLPAD_CONNECTIONS__pgdemo__multiStatementTransactionEnabled: 'true'
+      SQLPAD_CONNECTIONS__pgdemo__idleTimeoutSeconds: 86400
+    volumes:
+      - /tmp/sqlpad:/var/lib/sqlpad
+
+  elasticsearch:
+    image: elasticsearch:7.12.0
+    ports:
+        - "9200:9200"
+    environment:
+        - discovery.type=single-node
+    volumes:
+        - ./esdata/:/usr/share/elasticsearch/data/
+  kibana:
+    image: kibana:7.12.0
+    ports:
+        - "5601:5601"
+    environment:
+        - ELASTICSEARCH_URL=http://localhost:9200
