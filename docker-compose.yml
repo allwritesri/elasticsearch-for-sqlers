@@ -8,9 +8,8 @@ services:
     environment:
       - POSTGRES_USER=sqlpad
       - POSTGRES_PASSWORD=sqlpad
-    volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-
+    networks:
+      - presentation
   sqlpad:
     container_name: sqlpad
     image: "sqlpad/sqlpad"
@@ -33,7 +32,8 @@ services:
       SQLPAD_CONNECTIONS__pgdemo__idleTimeoutSeconds: 86400
     volumes:
       - /tmp/sqlpad:/var/lib/sqlpad
-
+    networks:
+      - presentation
   elasticsearch:
     image: elasticsearch:7.12.0
     ports:
@@ -42,9 +42,25 @@ services:
         - discovery.type=single-node
     volumes:
         - ./esdata/:/usr/share/elasticsearch/data/
+    networks:
+      - presentation
   kibana:
     image: kibana:7.12.0
     ports:
         - "5601:5601"
     environment:
         - ELASTICSEARCH_URL=http://localhost:9200
+    networks:
+      - presentation
+  indexer:
+    image: docker.io/sriharshadatla/es-assessment-indexer:7.0
+    container_name: initial-data-indexer
+    networks:
+      - presentation
+    depends_on:
+      - elasticsearch
+      - postgres
+
+networks:
+  presentation:
+    driver: bridge
